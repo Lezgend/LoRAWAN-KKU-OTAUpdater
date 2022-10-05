@@ -1,5 +1,5 @@
 from machine import UART, Pin, Timer
-import time, sys, os
+import time, sys, os, math, random
 
 def sendATcommand(ATcommand):
     rstr = ""
@@ -12,8 +12,9 @@ def sendATcommand(ATcommand):
 def sendHello():
     # Send 5 characters from string "HELLO"
     try:
+        x = round(-1.0 * 5 * math.log(1-random.random()) * 100)
         timer1 = Timer(0)
-        timer1.init(period=1000, mode=Timer.PERIODIC, callback=lambda t: sendATcommand("AT+NCMGS=5,HELLO"))
+        timer1.init(period=x, mode=Timer.PERIODIC, callback=lambda t: sendATcommand("AT+NCMGS=5,HELLO"))
 
     except KeyboardInterrupt:
         print("Interrupted!!")
@@ -48,17 +49,17 @@ def Restart():
     # Restart MAXIIOT DL7612-AS923-TH
 
 # LOOP OTAA
-    sendATcommand1('AT+NRB')
+    sendATcommand('AT+NRB')
     time.sleep(5)
     # Check LoRaWAN Network Server Connection (AT+CGATT)
     print("Check LoRaWAN Network Server Connection (If 1 mean module has connected)\n")
     print("PLEASE WAIT!")
     time.sleep(20.0)
 
-    rstr = sendATcommand1("AT+CGATT")
+    rstr = sendATcommand("AT+CGATT")
     tryno = 1
     while rstr != "+CGATT:1":
-        rstr = sendATcommand1("AT+CGATT")
+        rstr = sendATcommand("AT+CGATT")
         print("Respond String")
         print(rstr)
         if rstr.startswith("+CGATT:1"):
@@ -71,7 +72,7 @@ def Restart():
             print(b[-1:])
             if b[-1:] == "0":
                 print("YES")
-                sendATcommand1('AT+NRB')
+                sendATcommand('AT+NRB')
             else:
                 print("NO")
                 tryno = tryno+1
@@ -84,7 +85,7 @@ if __name__ == "__main__":
     #sendATcommand("AT+CLAC")
     #sendATcommand("AT+RESTORE");sendATcommand("AT+NCONFIG")
     #sendATcommand("AT+DEVEUI");sendATcommand("AT+APPKEY")
-    #sendATcommand("AT+NCONFIG");sendATcommand("AT+CHSET")                            
+    ##sendATcommand("AT+NCONFIG");sendATcommand("AT+CHSET")                            
     #Config()
     Restart()
     sendHello()
