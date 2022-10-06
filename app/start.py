@@ -1,4 +1,4 @@
-from machine import UART, Pin, Timer
+from machine import UART
 import time, sys, os, math, random
 
 def sendATcommand(ATcommand):
@@ -10,12 +10,18 @@ def sendATcommand(ATcommand):
     return rstr
     
 def sendHello():
-    # Send 5 characters from string "HELLO"
+    count = 0
+    
     try:
-        x = round(-1.0 * 5 * math.log(1-random.random()) * 100)
-        timer1 = Timer(0)
-        timer1.init(period=x, mode=Timer.PERIODIC, callback=lambda t: sendATcommand("AT+NCMGS=5,HELLO"))
-
+        x = round(-1.0 * 5 * math.log(1-random.random()))
+        while True:
+            rstr = sendATcommand("AT+NCMGS=20,HELLOHOWAREYOUTODAY?")
+            time.sleep(x)
+            count += 1
+            print(count)
+            if count == 10:       
+                break
+    
     except KeyboardInterrupt:
         print("Interrupted!!")
         try:
@@ -24,37 +30,26 @@ def sendHello():
             os._exit(0)
 
 def Config():
-    # OTAA
-    sendATcommand("AT+DEVEUI")
-    sendATcommand("AT+APPKEY")
-    
-    # ABP
-    #sendATcommand("AT+APPSKEY")
-    #sendATcommand("AT+NWKSKEY")
-    #sendATcommand("AT+ADDR")
-    
     sendATcommand("AT+DEBUG=1")
     sendATcommand("AT+ISMBAND=6")
     sendATcommand("AT+CLASS=A")
     sendATcommand("AT+ACTIVATE=1")
-    sendATcommand("AT+PORT=20")
-    sendATcommand("AT+CFM=1")
-    sendATcommand("AT+RXWIN2=923200000,2")
+    sendATcommand("AT+CFM=0")
     sendATcommand("AT+SAVE")
 
-    Restart()
+    #Restart()
     sendATcommand("AT+NCONFIG");sendATcommand("AT+CHSET") 
 
 def Restart():
     # Restart MAXIIOT DL7612-AS923-TH
 
-# LOOP OTAA
+    # LOOP OTAA
     sendATcommand('AT+NRB')
     time.sleep(5)
     # Check LoRaWAN Network Server Connection (AT+CGATT)
     print("Check LoRaWAN Network Server Connection (If 1 mean module has connected)\n")
     print("PLEASE WAIT!")
-    time.sleep(20.0)
+    time.sleep(3.0)
 
     rstr = sendATcommand("AT+CGATT")
     tryno = 1
@@ -78,15 +73,14 @@ def Restart():
                 tryno = tryno+1
             time.sleep(20.0)
             print("Join Success")
-# END LOOP OTAA
+    # END LOOP OTAA
         
 if __name__ == "__main__":
     uart = UART(2, baudrate=115200, bits=8, parity=None, stop=1, timeout=1000, timeout_char=1000)
     #sendATcommand("AT+CLAC")
     #sendATcommand("AT+RESTORE");sendATcommand("AT+NCONFIG")
     #sendATcommand("AT+DEVEUI");sendATcommand("AT+APPKEY")
-    ##sendATcommand("AT+NCONFIG");sendATcommand("AT+CHSET")                            
+    #sendATcommand("AT+NCONFIG");sendATcommand("AT+CHSET")                            
     #Config()
     Restart()
     sendHello()
-
