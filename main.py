@@ -1,86 +1,31 @@
-from machine import UART
-import time, sys, os, math, random, network
 
-def sendATcommand(ATcommand):
-    rstr = ""
-    print("Command: {0}\r\n".format(ATcommand))
-    uart.write("{0}\r\n".format(ATcommand))
-    rstr = uart.read().decode("utf-8")
-    print(rstr)
-    return rstr
-    
-def sendHello():
-    count = 0
-    
-    try:
-        x = round(-1.0 * 5 * math.log(1-random.random()))
-        while True:
-            rstr = sendATcommand("AT+NCMGS=20,HELLOHOWAREYOUTODAY?")
-            time.sleep(x)
-            count += 1
-            print(count)
-            if count == 10:       
-                break
-    
-    except KeyboardInterrupt:
-        print("Interrupted!!")
-        try:
-            sys.exit(0)
-        except SystemExit:
-            os._exit(0)
 
-def Config():
-    sendATcommand("AT+DEBUG=1")
-    sendATcommand("AT+ISMBAND=6")
-    sendATcommand("AT+CLASS=A")
-    sendATcommand("AT+ACTIVATE=1")
-    sendATcommand("AT+CFM=0")
-    sendATcommand("AT+SAVE")
+def connectToWifiAndUpdate():
+    import time, machine, network, gc, app.secrets as secrets
+    time.sleep(1)
+    print('Memory free', gc.mem_free())
 
-    #Restart()
-    sendATcommand("AT+NCONFIG");sendATcommand("AT+CHSET") 
+    from app.ota_updater import OTAUpdater
 
-def Restart():
-    # Restart MAXIIOT DL7612-AS923-TH
+    sta_if = network.WLAN(network.STA_IF)
+    if not sta_if.isconnected():
+        print('connecting to network...')
+        sta_if.active(True)
+        sta_if.connect(secrets.WIFI_SSID, secrets.WIFI_PASSWORD)
+        while not sta_if.isconnected():
+            pass
+    print('network config:', sta_if.ifconfig())
+    otaUpdater = OTAUpdater('https://github.com/Lezgend/LoRAWAN-KKU-OTAUpdater', main_dir='app', secrets_file="secrets.py")
+    hasUpdated = otaUpdater.install_update_if_available()
+    if hasUpdated:
+        machine.reset()
+    else:
+        del(otaUpdater)
+        gc.collect()
 
-    # LOOP OTAA
-    sendATcommand('AT+NRB')
-    time.sleep(5)
-    # Check LoRaWAN Network Server Connection (AT+CGATT)
-    print("Check LoRaWAN Network Server Connection (If 1 mean module has connected)\n")
-    print("PLEASE WAIT!")
-    time.sleep(3.0)
+def startApp():
+    import app.start
 
-    rstr = sendATcommand("AT+CGATT")
-    tryno = 1
-    while rstr != "+CGATT:1":
-        rstr = sendATcommand("AT+CGATT")
-        print("Respond String")
-        print(rstr)
-        if rstr.startswith("+CGATT:1"):
-            print("*******OTAA OK*******")
-            break
-        else:
-            print("Retry OTAA Continue")
-        
-            b = str(tryno)
-            print(b[-1:])
-            if b[-1:] == "0":
-                print("YES")
-                sendATcommand('AT+NRB')
-            else:
-                print("NO")
-                tryno = tryno+1
-            time.sleep(20.0)
-            print("Join Success")
-    # END LOOP OTAA
-        
-if __name__ == "__main__":    
-    uart = UART(2, baudrate=115200, bits=8, parity=None, stop=1, timeout=1000, timeout_char=1000)
-    #sendATcommand("AT+CLAC")
-    #sendATcommand("AT+RESTORE");sendATcommand("AT+NCONFIG")
-    #sendATcommand("AT+DEVEUI");sendATcommand("AT+APPKEY")
-    #sendATcommand("AT+NCONFIG");sendATcommand("AT+CHSET")                            
-    #Config()
-    Restart()
-    sendHello()
+
+connectToWifiAndUpdate()
+startApp()
