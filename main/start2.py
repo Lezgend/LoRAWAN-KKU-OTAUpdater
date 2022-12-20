@@ -96,15 +96,8 @@ def Restart():
             if check == 3:
                 Restart()
     # END LOOP OTAA
-        
-if __name__ == "__main__":    
-    uart = UART(2, baudrate=115200, bits=8, parity=None, stop=1, timeout=500, timeout_char=500)
-    #sendATcommand("AT+CHSET")  
-    #sendATcommand("AT+CLAC")
-    #sendATcommand("AT+RESTORE");sendATcommand("AT+NCONFIG")
-    #sendATcommand("AT+DEVEUI");sendATcommand("AT+APPKEY")
-    #sendATcommand("AT+NCONFIG");sendATcommand("AT+CHSET")                            
-    #Config()
-    Restart()
-    sendHello()
+       
+uart = UART(2, baudrate=115200, bits=8, parity=None, stop=1, timeout=500, timeout_char=500)
+Restart()
+sendHello()
 
