@@ -27,7 +27,7 @@ def sendHello():
             time.sleep(time_interval() + 1)
             count += 1
             print("Cycle: ", count)
-            if count == 10:       
+            if count == 1000:       
                 break
             
     # When do Ctr+C for tnterrupting routines
