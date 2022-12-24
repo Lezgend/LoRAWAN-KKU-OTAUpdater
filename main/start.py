@@ -50,7 +50,7 @@ def Config():
     
     sendATcommand("AT+DEBUG=1")
     sendATcommand("AT+ADR=0")
-    sendATcommand("AT+DR=4")
+    sendATcommand("AT+DR=3")
     sendATcommand("AT+SAVE")
 
 #     Restart()
