@@ -1,12 +1,19 @@
 from machine import UART
-import time, sys, os, math, random, network
+import time, sys, os, math, random, network, machine
+check = 0
 
 # Send AT Command function with <CR><LF>
 def sendATcommand(ATcommand):
     rstr = ""
     print("Command: {0}\r\n".format(ATcommand))
     uart.write("{0}\r\n".format(ATcommand))
-    rstr = uart.read().decode("utf-8")
+    rstr = uart.read()
+    if rstr is None:
+        rstr = "None"
+        time.sleep(time_interval() + 1)
+        machine.reset()
+    else:
+        rstr = rstr.decode("utf-8")
     print(rstr)
     return rstr
 
@@ -23,7 +30,7 @@ def sendHello():
     try:
         while True:
             #rstr = sendATcommand("AT+NCMGS=5,HELLO")
-            rstr = sendATcommand("AT+NMGS=20,48454c4c4f484f57415245594f55544f4441593f")
+            sendATcommand("AT+NMGS=20,48454c4c4f484f57415245594f55544f4441593f")
             time.sleep(time_interval() + 1)
             count += 1
             print("Cycle: ", count)
@@ -40,33 +47,23 @@ def sendHello():
 
 # Config module function
 def Config():
-#     sendATcommand("AT+DEBUG=1")
-#     sendATcommand("AT+ISMBAND=6")
-#     sendATcommand("AT+CLASS=A")
-#     sendATcommand("AT+ACTIVATE=1")
-#     sendATcommand("AT+ADR=1")
-#     sendATcommand("AT+CFM=1")
-#     sendATcommand("AT+SAVE")
-    
     sendATcommand("AT+DEBUG=1")
     sendATcommand("AT+ADR=0")
     sendATcommand("AT+DR=1")
     sendATcommand("AT+SAVE")
 
-#     Restart()
-#     sendATcommand("AT+NCONFIG");sendATcommand("AT+CHSET")
-
 # Seb-string find index and do striping
 def return_join_value(rstr):
+    if rstr == None or rstr == "None":
+        return ""
     y = -1 
     cgatt_start_index = rstr.find(":") + 1
     cgatt_end_index = rstr.find("\n", cgatt_start_index)
     
     new_str = rstr[cgatt_start_index:cgatt_end_index] 
     return new_str.strip()
-   
-# Restart the module (MAXIIOT DL7612-AS923-TH)
-def Restart():
+
+def sendRestartCommand():
     # LOOP OTAA
     sendATcommand("AT+NRB")
     # Check LoRaWAN Network Server Connection (AT+CGATT)
@@ -74,28 +71,29 @@ def Restart():
     print("PLEASE WAIT!")
     time.sleep(time_interval())
 
+# Restart the module (MAXIIOT DL7612-AS923-TH)
+def Restart():
+    sendRestartCommand()
+    print("----Respond String----")
     rstr = sendATcommand("AT+CGATT")
-    
+    join_value = return_join_value(rstr)
     # Check OTAA join value
-    check = 0
-    while return_join_value(rstr) != "1":
-        rstr=sendATcommand("AT+CGATT")
-        time.sleep(time_interval())
-        print("Respond String")
-        print(rstr)
-        if return_join_value(rstr) == "1":
-           print("++++OTAA OK+++++") 
-           break
-        elif return_join_value(rstr) == "2":
-            print("Retry OTAA Continue")
-            print("NOOOOOOOOOOOO")
-            check += 1
-            print("Check =", check)
-            if check == 3:
-                Restart()
+    global check
+    # if OTAA join value is not 1
+    while join_value != "1":
+        print("Retry OTAA Continue")
+        print("NOOOOOOOOOOOO")
+        check += 1
+        print("Check =", check)
+        if check == 10:
+            check = 0
+            sendRestartCommand()
+        rstr = sendATcommand("AT+CGATT")
+        join_value = return_join_value(rstr)
+    print("++++OTAA OK+++++")
     # END LOOP OTAA
         
-uart = UART(2, baudrate=115200, bits=8, parity=None, stop=1, timeout=500, timeout_char=500)                 
+uart = UART(2, baudrate=115200, bits=8, parity=None, stop=1, timeout=500)                
 Config()
 Restart()
 sendHello()
