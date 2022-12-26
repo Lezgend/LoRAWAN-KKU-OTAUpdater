@@ -85,7 +85,7 @@ def Restart():
         print("NOOOOOOOOOOOO")
         check += 1
         print("Check =", check)
-        if check == 10:
+        if check == 30:
             check = 0
             sendRestartCommand()
         rstr = sendATcommand("AT+CGATT")
@@ -93,7 +93,7 @@ def Restart():
     print("++++OTAA OK+++++")
     # END LOOP OTAA
         
-uart = UART(2, baudrate=115200, bits=8, parity=None, stop=1, timeout=500)                
+uart = UART(2, baudrate=115200, bits=8, parity=None, stop=1, timeout=1000)                
 Config()
 Restart()
 sendHello()
